@@ -1,0 +1,11 @@
+version: '2'
+services:
+  tgbot:
+    build:
+      context: "python"
+      dockerfile: "Dockerfile"
+    container_name: tgbot
+    ports:
+      - '8000:8000'
+    environment:
+      - TG_TOKEN=${TG_TOKEN}
