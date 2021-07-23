@@ -6,5 +6,5 @@ CREATE STREAM airquality_stream(
               lat VARCHAR,
               long  VARCHAR,
               species STRUCT )
-            WITH (KAFKA_TOPIC='airquality',
-                  VALUE_FORMAT='json');
+WITH (KAFKA_TOPIC='airquality',
+      VALUE_FORMAT='json');

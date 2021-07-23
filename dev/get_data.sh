@@ -2,8 +2,8 @@
 while [ 1 -eq 1 ];
 do
     curl --show-error --silent http://api.erg.ic.ac.uk/AirQuality/Hourly/MonitoringIndex/GroupName=London/Json |
-		jq --raw-output \
-		   --compact-output \
+		jq --compact-output \
+		  --raw-output\
 		   --arg sep $'\x1c' \
          '.HourlyAirQualityIndex.LocalAuthority[]| select(.Site!= null) |.Site | if type == "array" then .[] else . end| {site: .["@SiteCode"], name: .["@SiteName"], lat:.["@Latitude"],long:.["@Longitude"],species:.Species} | [.site +$sep, tostring] | join("")' |
         kafkacat -b broker:29092 -t  airquality -K$'\x1c' -P -T
@@ -18,3 +18,6 @@ done
 #
 #key values. timestamp key? partitions too.https://rmoff.net/2020/09/30/setting-key-value-when-piping-from-jq-to-kafkacat/
 #don't tihnk I actually need a key...
+
+#https://www.markhneedham.com/blog/2019/05/23/deleting-kafka-topics-on-docker/ we got to delete the volume..
+#docker exec broker kafka-topics --delete --zookeeper zookeeper:2181 --topic airquality
