@@ -5,4 +5,4 @@ COPY setup.py setup.py
 RUN pip install .
 COPY tg_bot .
 CMD ["ls"]
-CMD ["python", "tg_bot.py"]
+CMD ["python","-u", "tg_bot.py"]

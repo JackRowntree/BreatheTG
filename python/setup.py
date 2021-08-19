@@ -8,6 +8,7 @@ setup(
     url="https://github.com/JackRowntree/BreatheTG",
     packages=find_packages(),
     install_requires = [
-        'python-telegram-bot'
+        'python-telegram-bot',
+        'ksql'
     ],
 )

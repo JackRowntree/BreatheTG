@@ -1,6 +1,6 @@
-version: '2'
+version: "2"
 services:
-  tgbot:
+ tgbot:
     build:
       context: "python"
       dockerfile: "Dockerfile"
@@ -9,3 +9,95 @@ services:
       - '8000:8000'
     environment:
       - TG_TOKEN=${TG_TOKEN}
+ zookeeper:
+    image: zookeeper
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+ broker:
+    image: confluentinc/cp-kafka:latest
+    container_name: broker
+    ports:
+      - '9092:9092'
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+ kafkacat:
+    build: kafka
+    container_name: kafkacat
+    depends_on:
+      - broker
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        apk add jq;
+        apk add curl;
+        while [ 1 -eq 1 ];do sleep 60;done
+ schema-registry:
+    image: "confluentinc/cp-schema-registry:6.0.1"
+    container_name: schema-registry
+    depends_on:
+      - zookeeper
+      - broker
+    ports:
+      - '8081:8081'
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: broker:29092
+
+ ksqldb:
+    image: confluentinc/ksqldb-server:latest
+    container_name: ksqldb
+    ports:
+      - "8088:8088"
+    depends_on:
+      - broker
+      - schema-registry
+    environment:
+      KSQL_BOOTSTRAP_SERVERS: broker:29092
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_KSQL_CONNECT_URL: http://kafka-connect:8083
+      KSQL_KSQL_SERVICE_ID: confluent_rmoff_01
+      KSQL_KSQL_HIDDEN_TOPICS: '^_.*,default_ksql_processing_log'
+
+ ksqldb-cli:
+    build:
+      context: "kafka/ksqldb-cli"
+      dockerfile: "Dockerfile"
+    container_name: ksqldb-cli
+    depends_on:
+      - broker
+      - ksqldb
+    volumes:
+      - ./kafka/ksql_scripts/:/scripts/
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        echo -e "\n\n⏳ Waiting for KSQL to be available before launching CLI\n"
+        while [ $$(curl -s -o /dev/null -w %{http_code} http://ksqldb:8088/) -eq 000 ]
+        do
+          echo -e $$(date) "KSQL Server HTTP state: " $$(curl -s -o /dev/null -w %{http_code} http://ksqldb:8088/) " (waiting for 200)"
+          sleep 5
+        done
+        echo -e "\n\n-> Running KSQL commands\n"
+        cat scripts/create_stream.sql <(echo 'EXIT')| ksql http://ksqldb:8088
+        echo -e "\n\n-> Sleeping…\n"
+        sleep infinity
+    tty: true
+
+
+#    https://rmoff.net/2018/12/15/docker-tips-and-tricks-with-kafka-connect-ksqldb-and-kafka/
