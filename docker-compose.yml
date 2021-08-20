@@ -34,17 +34,15 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
  kafkacat:
-    build: kafka
+    build: kafkacat
     container_name: kafkacat
     depends_on:
       - broker
     entrypoint:
-      - /bin/sh
+      - /bin/bash
       - -c
-      - |
-        apk add jq;
-        apk add curl;
-        while [ 1 -eq 1 ];do sleep 60;done
+      - /scripts/get_data.sh
+
  schema-registry:
     image: "confluentinc/cp-schema-registry:6.0.1"
     container_name: schema-registry
@@ -75,28 +73,19 @@ services:
 
  ksqldb-cli:
     build:
-      context: "kafka/ksqldb-cli"
+      context: "ksqldb-cli"
       dockerfile: "Dockerfile"
     container_name: ksqldb-cli
     depends_on:
       - broker
       - ksqldb
     volumes:
-      - ./kafka/ksql_scripts/:/scripts/
+      - ./kafka/kafkacat/:/scripts/
     entrypoint:
       - /bin/bash
       - -c
-      - |
-        echo -e "\n\n⏳ Waiting for KSQL to be available before launching CLI\n"
-        while [ $$(curl -s -o /dev/null -w %{http_code} http://ksqldb:8088/) -eq 000 ]
-        do
-          echo -e $$(date) "KSQL Server HTTP state: " $$(curl -s -o /dev/null -w %{http_code} http://ksqldb:8088/) " (waiting for 200)"
-          sleep 5
-        done
-        echo -e "\n\n-> Running KSQL commands\n"
-        cat scripts/create_stream.sql <(echo 'EXIT')| ksql http://ksqldb:8088
-        echo -e "\n\n-> Sleeping…\n"
-        sleep infinity
+      - scripts/create_ksql_stream.sh
+
     tty: true
 
 
