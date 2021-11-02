@@ -9,6 +9,7 @@ setup(
     packages=find_packages(),
     install_requires = [
         'python-telegram-bot',
-        'ksql'
+        'ksql',
+        'pandas',
     ],
 )

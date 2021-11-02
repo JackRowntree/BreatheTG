@@ -7,8 +7,16 @@ services:
     container_name: tgbot
     ports:
       - '8000:8000'
+    depends_on:
+      - broker
+      - ksqldb
+      - kafkacat
+      - ksqldb-cli
+    command: >
+      /bin/bash -c "sleep 20 && python -u tg_bot.py"
     environment:
       - TG_TOKEN=${TG_TOKEN}
+
  zookeeper:
     image: zookeeper
     container_name: zookeeper
@@ -22,6 +30,11 @@ services:
       - '9092:9092'
     depends_on:
       - zookeeper
+#    healthcheck:
+#      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server 127.0.0.1:9092 --topic airquality --describe"]
+#      interval: 2s
+#      timeout: 2s
+#      retries: 15
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -42,7 +55,8 @@ services:
       - /bin/bash
       - -c
       - /scripts/get_data.sh
-
+  #      - sleep 100
+#
  schema-registry:
     image: "confluentinc/cp-schema-registry:6.0.1"
     container_name: schema-registry
@@ -70,23 +84,25 @@ services:
       KSQL_KSQL_CONNECT_URL: http://kafka-connect:8083
       KSQL_KSQL_SERVICE_ID: confluent_rmoff_01
       KSQL_KSQL_HIDDEN_TOPICS: '^_.*,default_ksql_processing_log'
-
+      KSQL_KSQL_STREAMS_AUTO_OFFSET_RESET: 'earliest'
  ksqldb-cli:
-    build:
-      context: "ksqldb-cli"
-      dockerfile: "Dockerfile"
-    container_name: ksqldb-cli
-    depends_on:
-      - broker
-      - ksqldb
-    volumes:
-      - ./kafka/kafkacat/:/scripts/
-    entrypoint:
-      - /bin/bash
-      - -c
-      - scripts/create_ksql_stream.sh
+      build:
+        context: "ksqldb-cli"
+        dockerfile: "Dockerfile"
+      container_name: ksqldb-cli
+      depends_on:
+        - broker
+        - ksqldb
+        - kafkacat
+      volumes:
+        - ./kafka/kafkacat/:/scripts/
+      entrypoint:
+        - /bin/bash
+        - -c
+        - scripts/create_ksql_stream.sh
+  #      - sleep infinity;
 
-    tty: true
+      tty: true
 
 
-#    https://rmoff.net/2018/12/15/docker-tips-and-tricks-with-kafka-connect-ksqldb-and-kafka/
+##    https://rmoff.net/2018/12/15/docker-tips-and-tricks-with-kafka-connect-ksqldb-and-kafka/

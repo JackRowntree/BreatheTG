@@ -4,5 +4,3 @@ WORKDIR /app
 COPY setup.py setup.py
 RUN pip install .
 COPY tg_bot .
-CMD ["ls"]
-CMD ["python","-u", "tg_bot.py"]

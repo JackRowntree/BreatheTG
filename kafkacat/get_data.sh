@@ -1,4 +1,6 @@
 #!/bin/bash
+#upgrade- wait til topic existss
+sleep 10
 while [ 1 -eq 1 ];
 do
     curl --show-error --silent http://api.erg.ic.ac.uk/AirQuality/Hourly/MonitoringIndex/GroupName=London/Json |
@@ -7,7 +9,7 @@ do
 		   --arg sep $'\x1c' \
          '.HourlyAirQualityIndex.LocalAuthority[]| select(.Site!= null) |.Site | if type == "array" then .[] else . end| {site: .["@SiteCode"], name: .["@SiteName"], lat:.["@Latitude"],long:.["@Longitude"],species:.Species} | [.site +$sep, tostring] | join("")' |
         kafkacat -b broker:29092 -t  airquality -K$'\x1c' -P -T
-    sleep 3600
+     sleep 3600
 done
 
 #read up on listeners etc -zookeper?

@@ -1,6 +1,6 @@
 -- ksql> SET 'auto.offset.reset' = 'earliest';
 SET 'auto.offset.reset' = 'earliest';
-CREATE STREAM my_stream (site   VARCHAR,
+CREATE STREAM IF NOT EXISTS my_stream (site   VARCHAR,
                                                   name VARCHAR,
                                                   lat        double,
                                                   long double,
