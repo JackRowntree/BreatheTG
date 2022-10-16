@@ -11,5 +11,6 @@ setup(
         'python-telegram-bot',
         'ksql',
         'pandas',
+        'boto3'
     ],
 )

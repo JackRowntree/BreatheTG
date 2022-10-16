@@ -14,16 +14,17 @@ from typing import Dict
 from telegram import Update, ForceReply,KeyboardButton,ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, ConversationHandler
 import ksqldb as ksql
+import param_store as ps
+
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
-
 logger = logging.getLogger(__name__)
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
-
+AWS_PS_PREFIX = 'TG_TOKEN'
 markup = ReplyKeyboardMarkup([[KeyboardButton('Send location',request_location=True)]], one_time_keyboard=True)
-
+param_store = ps.SSMParameterStore()
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
     """Helper function for formatting the gathered user info."""
@@ -71,7 +72,8 @@ def done(update: Update, context: CallbackContext) -> int:
 def main() -> None:
     """Run the bot."""
     # Create the Updater and pass it your bot's token.
-    updater = Updater(os.getenv('TG_TOKEN'))
+    TG_TOKEN = param_store.get(AWS_PS_PREFIX)
+    updater = Updater(TG_TOKEN)
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher

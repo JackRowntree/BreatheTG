@@ -12,11 +12,14 @@ services:
       - ksqldb
       - kafkacat
       - ksqldb-cli
+    volumes:
+      - ./:/app/
     command: >
       /bin/bash -c "sleep 20 && python -u tg_bot.py"
     environment:
-      - TG_TOKEN=${TG_TOKEN}
-
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
  zookeeper:
     image: zookeeper
     container_name: zookeeper
