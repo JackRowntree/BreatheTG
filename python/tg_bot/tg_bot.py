@@ -37,7 +37,7 @@ def start(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
         "Breathe. Send me your location to find pollution levels in your area.",
         reply_markup=markup,
-    )
+    )   
     return CHOOSING
 
 
@@ -47,9 +47,10 @@ def regular_choice(update: Update, context: CallbackContext) -> int:
     loc = [str(loc.latitude),str(loc.longitude)]
     context.user_data['location'] = loc
     print(loc)
-    airquality_dict = ksql.get_latest_airquality_data_for_location(loc[0],loc[1])
+    results_df = ksql.get_latest_airquality_data_for_location(loc[0],loc[1])
     print(airquality_dict)
-    update.message.reply_text(f"Looks like you're at {';'.join(loc)} <br> Your nearest measurement is from {airquality_dict['site']}"
+    nearest_site_dict = get_nearest_site_dict(results_df)
+    update.message.reply_text(f"Looks like you're at {';'.join(loc)} <br> Your nearest measurement is from {airquality_dict['sitename']}"
                               f"Your readings are as follows:{airquality_dict['readings']}")
     ksql.get_latest_airquality_data_for_location(loc.latitude,loc.longitude)
     return TYPING_REPLY
@@ -59,7 +60,7 @@ def done(update: Update, context: CallbackContext) -> int:
     user_data = context.user_data
     if 'choice' in user_data:
         del user_data['choice']
-
+    
     update.message.reply_text(
         f"I learned these facts about you: {facts_to_str(user_data)}Until next time!",
         reply_markup=ReplyKeyboardRemove(),
@@ -68,6 +69,9 @@ def done(update: Update, context: CallbackContext) -> int:
     user_data.clear()
     return ConversationHandler.END
 
+# def error(update, error):
+#     """Log Errors caused by Updates."""
+#     logger.warning('Update "%s" caused error "%s"', update, error)
 
 def main() -> None:
     """Run the bot."""
@@ -77,6 +81,9 @@ def main() -> None:
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
+
+    # log all errors
+    # dispatcher.add_error_handler(error)
 
     # Add conversation handler with the states CHOOSING, TYPING_CHOICE and TYPING_REPLY
     conv_handler = ConversationHandler(

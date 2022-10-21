@@ -1,4 +1,5 @@
 #!/bin/bash
+chmod 755 /scripts/*
 echo -e "\n\n⏳ Waiting for KSQL to be available before launching CLI\n"
 while [ $(curl -s -o /dev/null -w %{http_code} http://ksqldb:8088/) -eq 000 ]
 do

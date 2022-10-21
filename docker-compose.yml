@@ -13,7 +13,7 @@ services:
       - kafkacat
       - ksqldb-cli
     volumes:
-      - ./:/app/
+      - './:/app/tg_bot'
     command: >
       /bin/bash -c "sleep 20 && python -u tg_bot.py"
     environment:
