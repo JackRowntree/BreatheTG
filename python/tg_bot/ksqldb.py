@@ -52,7 +52,7 @@ def parse_kqsl_output(data):
     return pd.DataFrame(out)
 
 def _get_closest_site(df_out):
-    return df_out.sort_values('distance', ascending=True).head(1).to_dict('records')
+    return df_out.sort_values('distance', ascending=True).head(1).to_dict('records')[0]
 
     #
     # select

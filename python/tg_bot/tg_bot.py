@@ -46,13 +46,9 @@ def regular_choice(update: Update, context: CallbackContext) -> int:
     loc = update.message.location
     loc = [str(loc.latitude),str(loc.longitude)]
     context.user_data['location'] = loc
-    print(loc)
-    results_df = ksql.get_latest_airquality_data_for_location(loc[0],loc[1])
-    print(airquality_dict)
-    nearest_site_dict = get_nearest_site_dict(results_df)
-    update.message.reply_text(f"Looks like you're at {';'.join(loc)} <br> Your nearest measurement is from {airquality_dict['sitename']}"
-                              f"Your readings are as follows:{airquality_dict['readings']}")
-    ksql.get_latest_airquality_data_for_location(loc.latitude,loc.longitude)
+    nearest_results_dict = ksql.get_latest_airquality_data_for_location(loc[0],loc[1])
+    update.message.reply_text(f"Looks like you're at {';'.join(loc)} <br> Your nearest measurement is from {nearest_results_dict['sitename']}"
+                              f"Your readings are as follows:{nearest_results_dict['species']}")
     return TYPING_REPLY
 
 def done(update: Update, context: CallbackContext) -> int:
@@ -94,7 +90,7 @@ def main() -> None:
                     Filters.location, regular_choice
                 ),
             ],
-            TYPING_CHOICE: [
+            TYPING_REPLY: [
                 MessageHandler(
                     Filters.text & ~(Filters.command | Filters.regex('^Done$')), regular_choice
                 )
