@@ -23,7 +23,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
 AWS_PS_PREFIX = 'TG_TOKEN'
-markup = ReplyKeyboardMarkup([[KeyboardButton('Send location',request_location=True)]], one_time_keyboard=True)
+markup_loc = ReplyKeyboardMarkup([[KeyboardButton('Send location',request_location=True)]], one_time_keyboard=True)
+markup_end = ReplyKeyboardMarkup([["Done"]], one_time_keyboard=True)
 param_store = ps.SSMParameterStore()
 
 def facts_to_str(user_data: Dict[str, str]) -> str:
@@ -36,7 +37,7 @@ def start(update: Update, context: CallbackContext) -> int:
     """Start the conversation and ask user for input."""
     update.message.reply_text(
         "Breathe. Send me your location to find pollution levels in your area.",
-        reply_markup=markup,
+        reply_markup=markup_loc,
     )   
     return CHOOSING
 
@@ -47,22 +48,29 @@ def regular_choice(update: Update, context: CallbackContext) -> int:
     loc = [str(loc.latitude),str(loc.longitude)]
     context.user_data['location'] = loc
     nearest_results_dict = ksql.get_latest_airquality_data_for_location(loc[0],loc[1])
-    update.message.reply_text(f"Looks like you're at {';'.join(loc)} <br> Your nearest measurement is from {nearest_results_dict['sitename']}"
-                              f"Your readings are as follows:{nearest_results_dict['species']}")
+    update.message.reply_text(f"Looks like your nearest measurement is from {nearest_results_dict['sitename']}\n"
+                              f"Your readings are as follows:\n{format_species(nearest_results_dict['species'])}",
+                                      reply_markup=markup_end,
+)
     return TYPING_REPLY
 
+def format_species(species_dict: list) -> str:
+    out = ''
+    for dic in species_dict:
+        out+=f"""
+        ---------\n
+        Pollutant: {dic['@SpeciesDescription']}\n
+        Air Quality Band: {dic['@AirQualityBand']}\n
+        ---------\n
+        """
+    return out
+
 def done(update: Update, context: CallbackContext) -> int:
-    """Display the gathered info and end the conversation."""
-    user_data = context.user_data
-    if 'choice' in user_data:
-        del user_data['choice']
-    
+    """Display the gathered info and end the conversation."""    
     update.message.reply_text(
-        f"I learned these facts about you: {facts_to_str(user_data)}Until next time!",
-        reply_markup=ReplyKeyboardRemove(),
+        "Thank you for using Breathe. We hope your air is clean and plentiful ^_^"
     )
 
-    user_data.clear()
     return ConversationHandler.END
 
 # def error(update, error):

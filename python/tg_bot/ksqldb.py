@@ -37,30 +37,7 @@ def parse_kqsl_output(data):
             out.append(row)
             print(out)
     except (RuntimeError, StopIteration) as e:
-        pass
-    # for i in data:
-    #     out_str+= i.strip(',\n')
-    # print(out_str)
-    # vals = json.loads(out_str)
-    # print(vals)
-    # vals = [dic['row']['columns'] for dic in vals]
-    # print(vals)
-    # row = dict(zip(COLS,vals))
-    # print(row)
-    # row['species'] = json.loads(row['species'])
-    # print(row)
+        passs
     return pd.DataFrame(out)
 
-def _get_closest_site(df_out):
-    return df_out.sort_values('distance', ascending=True).head(1).to_dict('records')[0]
-
-    #
-    # select
-    # site,
-    # name,
-    # geo_distance(51.536455, -0.140526, LATEST_BY_OFFSET(lat), LATEST_BY_OFFSET(long), 'km'),
-    # LATEST_BY_OFFSET(species)
-    # from my_stream
-    # group by site,name
-    # emit changes;
     #
