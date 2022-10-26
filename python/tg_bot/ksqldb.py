@@ -3,11 +3,11 @@ import pandas as pd
 import json
 client = KSQLAPI('http://ksqldb:8088')
 
-COLS = ['sitecode','sitename','species','distance']
+COLS = ['sitecode','_timestamp','sitename','species','distance']
 def get_latest_airquality_data_for_location(tg_lat,tg_long):
     #TODO whats going on hre
     query = f"""
-    select site,name,species,geo_distance({tg_lat},{tg_long},lat,long) from latest_results
+    select site,ts,name,species,geo_distance({tg_lat},{tg_long},lat,long) from latest_results
     """
     query_output = client.query(query,stream_properties =  {'ksql.query.pull.table.scan.enabled':'true'})
     return get_closest_site(query_output)
@@ -16,6 +16,9 @@ def get_closest_site(query_output):
     df_out = parse_kqsl_output(query_output)
     closest_site_dict = _get_closest_site(df_out)
     return closest_site_dict
+
+def _get_closest_site(df_out):
+    return df_out.sort_values('distance', ascending=True).head(1).to_dict('records')[0]
 
 def parse_kqsl_output(data):
     """
@@ -37,7 +40,7 @@ def parse_kqsl_output(data):
             out.append(row)
             print(out)
     except (RuntimeError, StopIteration) as e:
-        passs
+        pass
     return pd.DataFrame(out)
 
     #

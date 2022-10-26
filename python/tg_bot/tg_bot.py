@@ -48,10 +48,10 @@ def regular_choice(update: Update, context: CallbackContext) -> int:
     loc = [str(loc.latitude),str(loc.longitude)]
     context.user_data['location'] = loc
     nearest_results_dict = ksql.get_latest_airquality_data_for_location(loc[0],loc[1])
-    update.message.reply_text(f"Looks like your nearest measurement is from {nearest_results_dict['sitename']}\n"
+    update.message.reply_text(f"Looks like your nearest measurement is from {nearest_results_dict['sitename']} at {nearest_results_dict['_timestamp']}\n"
                               f"Your readings are as follows:\n{format_species(nearest_results_dict['species'])}",
                                       reply_markup=markup_end,
-)
+    )
     return TYPING_REPLY
 
 def format_species(species_dict: list) -> str:

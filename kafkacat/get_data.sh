@@ -7,7 +7,7 @@ do
 		jq --compact-output \
 		  --raw-output\
 		   --arg sep $'\x1c' \
-         '.HourlyAirQualityIndex.LocalAuthority[]| select(.Site!= null) |.Site | if type == "array" then .[] else . end| {site: .["@SiteCode"], name: .["@SiteName"], lat:.["@Latitude"],long:.["@Longitude"],species:.Species} | [.site +$sep, tostring] | join("")' |
+         '.HourlyAirQualityIndex.LocalAuthority[]| select(.Site!= null) |.Site | if type == "array" then .[] else . end| {site: .["@SiteCode"], name: .["@SiteName"], lat:.["@Latitude"],long:.["@Longitude"], ts:.["@BulletinDate"], species:.Species} | [.site +$sep, tostring] | join("")' |
         kafkacat -b broker:29092 -t  airquality -K$'\x1c' -P -T
      sleep 3600
 done

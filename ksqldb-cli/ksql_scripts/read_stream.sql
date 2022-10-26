@@ -8,6 +8,7 @@ emit changes;
 
 select
 site,
+LATEST_BY_OFFSET(ts),
 LATEST_BY_OFFSET(lat),
 LATEST_BY_OFFSET(long),
 LATEST_BY_OFFSET(species)
