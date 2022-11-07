@@ -1,6 +1,6 @@
 #!/bin/bash
 #upgrade- wait til topic existss
-sleep 10
+# sleep 60 
 while [ 1 -eq 1 ];
 do
     curl --show-error --silent http://api.erg.ic.ac.uk/AirQuality/Hourly/MonitoringIndex/GroupName=London/Json |

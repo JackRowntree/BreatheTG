@@ -4,4 +4,4 @@ WORKDIR scripts
 RUN chmod +x .
 RUN apk add --no-cache bash
 RUN apk add jq;
-RUN apk add curl;
+RUN apk add curl;	

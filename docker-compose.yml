@@ -1,4 +1,4 @@
-version: "2"
+version: "3.1"
 services:
  tgbot:
     build:
@@ -20,12 +20,16 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    networks:
+      - breathe
  zookeeper:
     image: zookeeper
     container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks:
+    - breathe
  broker:
     image: confluentinc/cp-kafka:latest
     container_name: broker
@@ -33,11 +37,6 @@ services:
       - '9092:9092'
     depends_on:
       - zookeeper
-#    healthcheck:
-#      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server 127.0.0.1:9092 --topic airquality --describe"]
-#      interval: 2s
-#      timeout: 2s
-#      retries: 15
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -49,17 +48,28 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+      # Kafka automatically assigns 1gb memory which will throw an error on t2-micro instance.
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms256M"
+    networks:
+      - breathe
  kafkacat:
     build: kafkacat
     container_name: kafkacat
     depends_on:
       - broker
+        # entrypoint: ['bash', '-c']
+    # command:
+    #   # - chmod 755 /scripts/wait_for_it.sh
+    #   - /scripts/wait_for_it.sh
+    #   - broker:29092
+    #   - --
+    #   - /scripts/get_data.sh
     entrypoint:
       - /bin/bash
       - -c
       - /scripts/get_data.sh
-  #      - sleep 100
-#
+    networks:
+      - breathe
  schema-registry:
     image: "confluentinc/cp-schema-registry:6.0.1"
     container_name: schema-registry
@@ -71,7 +81,8 @@ services:
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: broker:29092
-
+    networks:
+      - breathe
  ksqldb:
     image: confluentinc/ksqldb-server:latest
     container_name: ksqldb
@@ -88,6 +99,8 @@ services:
       KSQL_KSQL_SERVICE_ID: confluent_rmoff_01
       KSQL_KSQL_HIDDEN_TOPICS: '^_.*,default_ksql_processing_log'
       KSQL_KSQL_STREAMS_AUTO_OFFSET_RESET: 'earliest'
+    networks:
+      - breathe
  ksqldb-cli:
       build:
         context: "ksqldb-cli"
@@ -103,9 +116,12 @@ services:
         - /bin/bash
         - -c
         - scripts/create_ksql_stream.sh
-  #      - sleep infinity;
-
       tty: true
-
+      networks:
+        - breathe
+networks:
+  breathe:
+    external: false
+    name: breathe
 
 ##    https://rmoff.net/2018/12/15/docker-tips-and-tricks-with-kafka-connect-ksqldb-and-kafka/
