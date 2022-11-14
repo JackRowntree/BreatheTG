@@ -7,5 +7,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: rickstaa/action-black@v1
-        with:
-          black_args: ". --check"
+        #uncomment to just output potential changes
+        # with:
+        #   black_args: ". --diff"
